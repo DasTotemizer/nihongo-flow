@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Window theme only; everything visible is drawn by Compose (see ui/theme). -->
+    <style name="Theme.NihongoFlow" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">#FAF7F2</item>
+        <item name="android:statusBarColor">#FAF7F2</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>

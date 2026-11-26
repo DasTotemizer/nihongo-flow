@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master, "claude/**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # GitHub's Ubuntu runners ship with the Android SDK and set ANDROID_HOME, so the
+      # :app module is included here (it is skipped on machines without an SDK).
+      - name: Core engine tests
+        run: ./gradlew --no-daemon :core:model:build :core:scheduler:test :core:holiday:test :core:workload:test
+
+      - name: Android unit tests and debug build
+        run: ./gradlew --no-daemon :app:testDebugUnitTest :app:assembleDebug
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: "**/build/reports/tests/"
+          if-no-files-found: ignore
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: nihongo-flow-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: ignore
