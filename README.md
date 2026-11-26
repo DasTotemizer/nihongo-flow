@@ -11,7 +11,7 @@ WaniKani, Tofugu, Anki or the Kaishi authors.
 
 ## Status
 
-Built in stages. Stage 1 (this one) is the foundation and the no-guilt scheduling engine:
+Built in stages. Stage 1 was the engine; stage 2 (this one) is the usable core app:
 
 | Area | State |
 | --- | --- |
@@ -19,8 +19,10 @@ Built in stages. Stage 1 (this one) is the foundation and the no-guilt schedulin
 | FSRS memory scheduler (java-fsrs, FSRS-6) | Done, verified against reference cases |
 | Workload manager and missed-day recovery | Done, simulated over 1/3/7/14/30-day breaks |
 | Holiday Mode rules (full, casual, indefinite pause) | Done |
-| Android app shell (theme, 5-tab navigation, Home) | Shell only; data screens come next |
-| Database, decks, review screen, card creation | Next stage |
+| On-device database (Room) | Done, persistence tested |
+| Decks, card creation and editing, cloze | Done |
+| Review screen, Home, Holiday Mode, Settings, Progress | Done |
+| Anki import | Next stage |
 
 See [docs/ROADMAP.md](docs/ROADMAP.md) for every phase and what remains.
 

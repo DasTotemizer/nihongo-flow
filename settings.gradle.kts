@@ -43,6 +43,7 @@ include(":core:model")
 include(":core:scheduler")
 include(":core:holiday")
 include(":core:workload")
+include(":core:study")
 
 if (hasAndroidSdk) {
     include(":app")

@@ -7,7 +7,10 @@
 - **Gradle multi-module** build with a version catalog (`gradle/libs.versions.toml`).
 - **Core modules are pure Kotlin** (JVM today, no Android imports, `kotlinx-datetime` for
   time) so they can move to Kotlin Multiplatform for an iOS client without rewriting.
-- Planned for the next stages: Room for storage, Hilt for dependency injection, WorkManager
+- **Room** for storage (`app/.../data`), behind the repository interfaces in `core:study`.
+- **Manual dependency wiring** (`AppContainer`) instead of Hilt for now: one database,
+  one store, one service. Hilt can come in if the graph grows.
+- Planned for the next stages: WorkManager
   for background sync, DataStore for preferences, Android Keystore (via an encrypted
   store) for the WaniKani token.
 
@@ -19,12 +22,12 @@
 | `core:scheduler` | **Memory scheduler.** FSRS through the official java-fsrs library | model, java-fsrs |
 | `core:holiday` | Holiday Mode and pause rules | model |
 | `core:workload` | **Workload manager.** What is presented in a session; missed-day recovery | model, holiday |
-| `app` | Android UI (Compose), wiring | all core modules |
+| `core:study` | Decks, notes, cards, cloze, Japanese text, sessions, stats; repository interfaces | all of the above |
+| `app` | Android UI (Compose), Room database, wiring | all core modules |
 
-Modules still to come, matching the spec's list: `core:japanese` (normalisation, furigana,
-cloze parsing), `core:anki` (package import), `core:wanikani` (API client and sync),
-`core:ai` (optional example generation), `core:stats`, `data` (Room, repositories,
-backup/restore), and feature UI packages.
+Modules still to come, matching the spec's list: `core:anki` (package import), `core:wanikani` (API client and sync),
+`core:ai` (optional example generation), and backup and restore (Room stays in `app` for now,
+behind the core interfaces). Japanese text handling and cloze parsing live in `core:study` for now.
 
 ## The key boundary: scheduler vs workload manager
 
@@ -37,7 +40,8 @@ The spec requires two independent systems, and the module graph enforces it:
   difficulty, due dates or history even by accident. Its output is a `SessionPlan`: which
   cards to show, which are deferred and why, and the true due counts.
 - Presentation bookkeeping (`DeferralState`, `RecoveryState`) is stored separately from
-  memory state. In the database these will be separate tables.
+  memory state, in separate tables (`fsrs_card_state` vs `workload_deferral` and
+  `workload_recovery_state`). Review history keeps the state before and after each answer.
 
 ## Decisions
 
