@@ -89,4 +89,41 @@ class RoomPersistenceTest {
         assertTrue(store.dueCards(clock.now).any { it.card.id == first })
         db.close()
     }
+
+    @Test
+    fun `upgrading from version 1 keeps settings and turns on two-button answers`() = runBlocking {
+        var db = NihongoFlowDatabase.open(context, name)
+        var study = service(db)
+        study.saveSettings(study.settings().copy(newCardsPerDay = 9, twoButtonReview = false))
+        study.createDeck("Kept")
+
+        // Rebuild the settings table exactly as schema version 1 had it, and mark the file as version 1.
+        db.openHelper.writableDatabase.apply {
+            execSQL(
+                "CREATE TABLE user_settings_v1 (id INTEGER NOT NULL, desiredRetention REAL NOT NULL, " +
+                    "targetSessionMinutes INTEGER NOT NULL, maxSessionMinutes INTEGER NOT NULL, " +
+                    "maxReviewsPerSession INTEGER NOT NULL, newCardsPerDay INTEGER NOT NULL, " +
+                    "recoveryPacing TEXT NOT NULL, preferredStudyDays TEXT NOT NULL, " +
+                    "casualSessionMinutes INTEGER NOT NULL, dayStartHour INTEGER NOT NULL, " +
+                    "enabledDirections TEXT NOT NULL, PRIMARY KEY(id))",
+            )
+            execSQL(
+                "INSERT INTO user_settings_v1 SELECT id, desiredRetention, targetSessionMinutes, maxSessionMinutes, " +
+                    "maxReviewsPerSession, newCardsPerDay, recoveryPacing, preferredStudyDays, casualSessionMinutes, " +
+                    "dayStartHour, enabledDirections FROM user_settings",
+            )
+            execSQL("DROP TABLE user_settings")
+            execSQL("ALTER TABLE user_settings_v1 RENAME TO user_settings")
+            version = 1
+        }
+        db.close()
+
+        db = NihongoFlowDatabase.open(context, name)
+        study = service(db)
+        val settings = study.settings()
+        assertEquals(9, settings.newCardsPerDay)
+        assertTrue(settings.twoButtonReview)
+        assertEquals(listOf("Kept"), study.decks().map { it.name })
+        db.close()
+    }
 }

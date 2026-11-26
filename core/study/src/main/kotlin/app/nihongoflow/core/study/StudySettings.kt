@@ -17,6 +17,11 @@ data class StudySettings(
     val casualSessionMinutes: Int = 5,
     val dayStartHour: Int = 4,
     val enabledDirections: Set<ReviewDirection> = ReviewDirection.DEFAULT_ENABLED,
+    /**
+     * Answer with two buttons, Forgot and Remembered (FSRS Again and Good), instead of four.
+     * This is FSRS's supported pass/fail use; nothing is estimated or faked.
+     */
+    val twoButtonReview: Boolean = true,
 ) {
     fun workload() = WorkloadSettings(
         targetSessionMinutes = targetSessionMinutes,

@@ -132,9 +132,9 @@ private fun CardContent(s: ReviewUi.Showing, vm: ReviewViewModel) {
                 when (e.key) {
                     Key.Spacebar, Key.Enter -> if (!s.revealed) vm.reveal() else vm.answer(Rating.GOOD)
                     Key.One -> vm.answer(Rating.AGAIN)
-                    Key.Two -> vm.answer(Rating.HARD)
-                    Key.Three -> vm.answer(Rating.GOOD)
-                    Key.Four -> vm.answer(Rating.EASY)
+                    Key.Two -> vm.answer(if (s.twoButtons) Rating.GOOD else Rating.HARD)
+                    Key.Three -> if (!s.twoButtons) vm.answer(Rating.GOOD) else return@onKeyEvent false
+                    Key.Four -> if (!s.twoButtons) vm.answer(Rating.EASY) else return@onKeyEvent false
                     else -> return@onKeyEvent false
                 }
                 true
@@ -188,11 +188,12 @@ private fun CardContent(s: ReviewUi.Showing, vm: ReviewViewModel) {
             Button(onClick = { vm.reveal() }, modifier = Modifier.fillMaxWidth()) { Text("Show answer") }
         } else {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                Rating.entries.forEach { rating ->
+                val ratings = if (s.twoButtons) listOf(Rating.AGAIN, Rating.GOOD) else Rating.entries
+                ratings.forEach { rating ->
                     val label = when (rating) {
-                        Rating.AGAIN -> "Again"
+                        Rating.AGAIN -> if (s.twoButtons) "Forgot" else "Again"
                         Rating.HARD -> "Hard"
-                        Rating.GOOD -> "Good"
+                        Rating.GOOD -> if (s.twoButtons) "Remembered" else "Good"
                         Rating.EASY -> "Easy"
                     }
                     val next = s.previews[rating]?.let { Formats.interval(s.now, it) } ?: ""

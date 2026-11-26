@@ -263,6 +263,7 @@ class RoomStore(private val db: NihongoFlowDatabase) : CollectionRepository, Pro
             dayStartHour = dayStartHour,
             enabledDirections = enabledDirections.split(",").filter { it.isNotBlank() }
                 .mapNotNull { name -> ReviewDirection.entries.firstOrNull { it.name == name.trim() } }.toSet(),
+            twoButtonReview = twoButtonReview,
         )
 
         fun StudySettings.toEntity() = SettingsEntity(
@@ -276,6 +277,7 @@ class RoomStore(private val db: NihongoFlowDatabase) : CollectionRepository, Pro
             casualSessionMinutes = casualSessionMinutes,
             dayStartHour = dayStartHour,
             enabledDirections = enabledDirections.map { it.name }.sorted().joinToString(","),
+            twoButtonReview = twoButtonReview,
         )
     }
 }

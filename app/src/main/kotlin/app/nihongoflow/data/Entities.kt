@@ -1,5 +1,6 @@
 package app.nihongoflow.data
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -131,4 +132,6 @@ data class SettingsEntity(
     val dayStartHour: Int,
     /** Comma-separated ReviewDirection names. */
     val enabledDirections: String,
+    /** Added in schema version 2. */
+    @ColumnInfo(defaultValue = "1") val twoButtonReview: Boolean = true,
 )

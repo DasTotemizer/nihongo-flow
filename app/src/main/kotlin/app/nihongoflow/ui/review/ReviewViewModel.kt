@@ -34,6 +34,8 @@ sealed interface ReviewUi {
         val now: Instant,
         val answered: Int,
         val remaining: Int,
+        /** Forgot and Remembered only, instead of Again, Hard, Good and Easy. */
+        val twoButtons: Boolean = true,
     ) : ReviewUi
 
     data class Finished(val answered: Int) : ReviewUi
@@ -121,6 +123,7 @@ class ReviewViewModel(private val study: StudyService) : ViewModel() {
             now = now,
             answered = current.answered,
             remaining = current.remaining + 1,
+            twoButtons = study.settings().twoButtonReview,
         )
     }
 

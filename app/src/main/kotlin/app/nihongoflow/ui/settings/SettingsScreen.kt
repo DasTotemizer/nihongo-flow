@@ -129,6 +129,21 @@ fun SettingsScreen(study: StudyService, nav: Navigator, modifier: Modifier = Mod
         }
 
         SectionCard {
+            Text("Answer buttons", style = MaterialTheme.typography.titleMedium)
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text("Just two: Forgot or Remembered", modifier = Modifier.weight(1f))
+                Switch(
+                    checked = s.twoButtonReview,
+                    onCheckedChange = { on -> update { it.copy(twoButtonReview = on) } },
+                )
+            }
+            MutedText(
+                if (s.twoButtonReview) "Swipe left for Forgot, right for Remembered. Works just as well for scheduling."
+                else "Again, Hard, Good and Easy, for finer control. Swipe left for Again, right for Good.",
+            )
+        }
+
+        SectionCard {
             Text("Review directions", style = MaterialTheme.typography.titleMedium)
             ReviewDirection.entries.forEach { dir ->
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {

@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [
@@ -17,7 +19,7 @@ import androidx.room.RoomDatabase
         HolidayEntity::class,
         SettingsEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 abstract class NihongoFlowDatabase : RoomDatabase() {
@@ -32,6 +34,17 @@ abstract class NihongoFlowDatabase : RoomDatabase() {
          * missing migration must fail loudly in testing rather than erase a learner's history.
          */
         fun open(context: Context, name: String = FILE_NAME): NihongoFlowDatabase =
-            Room.databaseBuilder(context.applicationContext, NihongoFlowDatabase::class.java, name).build()
+            Room.databaseBuilder(context.applicationContext, NihongoFlowDatabase::class.java, name)
+                .addMigrations(*MIGRATIONS)
+                .build()
+
+        /** Version 2 adds the two-button answer setting, on by default. */
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE user_settings ADD COLUMN twoButtonReview INTEGER NOT NULL DEFAULT 1")
+            }
+        }
+
+        val MIGRATIONS = arrayOf(MIGRATION_1_2)
     }
 }
