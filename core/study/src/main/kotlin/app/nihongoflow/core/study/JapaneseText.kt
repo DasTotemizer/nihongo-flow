@@ -26,6 +26,9 @@ object JapaneseText {
 
     fun containsKanji(text: String): Boolean = text.any { isKanji(it) }
 
+    /** Hiragana or katakana, including the long-vowel mark. */
+    fun isKana(c: Char): Boolean = c in '\u3041'..'\u309F' || c in '\u30A0'..'\u30FF'
+
     fun isKanji(c: Char): Boolean =
         c in '一'..'鿿' || c in '㐀'..'䶿' || c == '々'
 

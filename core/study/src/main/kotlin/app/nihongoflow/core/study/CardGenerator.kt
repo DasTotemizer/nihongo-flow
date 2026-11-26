@@ -6,7 +6,14 @@ import kotlinx.datetime.Instant
 object CardGenerator {
 
     /** Template keys (see [Card.templateKey]) the note should have, with their template and cloze number. */
-    fun requiredCards(note: Note): List<Pair<CardTemplate, Int>> = when (note.kind) {
+    fun requiredCards(note: Note): List<Pair<CardTemplate, Int>> {
+        val all = allCards(note)
+        val only = note.field(Fields.ONLY_CARDS).split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()
+        if (note.kind == NoteKind.CLOZE || only.isEmpty()) return all
+        return all.filter { (t, n) -> keyOf(t, n) in only }.ifEmpty { all }
+    }
+
+    private fun allCards(note: Note): List<Pair<CardTemplate, Int>> = when (note.kind) {
         NoteKind.VOCABULARY -> buildList {
             add(CardTemplate.RECOGNITION to 0)
             if (note.field(Fields.MEANING).isNotBlank()) add(CardTemplate.PRODUCTION to 0)
