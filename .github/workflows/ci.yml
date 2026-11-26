@@ -6,7 +6,7 @@ on:
   pull_request:
 
 permissions:
-  contents: read
+  contents: write # needed to publish the phone-installable pre-release
 
 jobs:
   build:
@@ -44,3 +44,18 @@ jobs:
           name: nihongo-flow-debug-apk
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: ignore
+
+      # Publishes the latest debug APK as a GitHub pre-release, so it can be downloaded
+      # straight onto a phone. Only for pushes, not pull request runs.
+      - name: Publish debug APK as pre-release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk nihongo-flow-debug.apk
+          gh release delete dev-build --yes --cleanup-tag || true
+          gh release create dev-build nihongo-flow-debug.apk \
+            --prerelease \
+            --target "$GITHUB_SHA" \
+            --title "Nihongo Flow development build" \
+            --notes "Debug build of ${GITHUB_REF_NAME} at ${GITHUB_SHA::7}. Install on Android 8.0 or newer. Development build: data may be reset between stages."
