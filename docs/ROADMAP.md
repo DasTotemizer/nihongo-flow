@@ -14,7 +14,7 @@ the next starts.
 - [x] Android shell: theme (light and dark), five-tab navigation, Home driven by the engine
 - [x] Guilt-free copy check
 
-## Stage 2: Phase 1 core app and Phase 2 screens (this PR)
+## Stage 2: Phase 1 core app and Phase 2 screens (merged)
 
 - [x] `core:study`: decks, notes, card generation, cloze parsing, Japanese text
       normalisation, duplicate detection, review sessions, statistics
@@ -32,10 +32,19 @@ the next starts.
 - [ ] Migration tests (there is only schema version 1 so far)
 - [ ] Hilt: replaced for now by a small manual `AppContainer`; revisit if wiring grows
 
+## Stage 3: Anki import (this PR)
+
+- [x] `.apkg` and `.colpkg` in all three Anki formats (anki2, anki21, zstd anki21b), with media
+- [x] `.csv` and `.txt`, including Anki's text export headers
+- [x] Preview: note types, counts, history, media; editable card type and field mapping
+- [x] Duplicate detection, and re-importing the same deck updates in place
+- [x] Fresh start, or keep progress by replaying the real review log through FSRS
+- [x] Tests on packages made by the real Anki library, on the JVM and through Android SQLite
+- [ ] Opening .apkg files straight from a file manager or browser ("Open with")
+- [ ] Audio and picture playback (files are saved now; Phase 6)
+
 ## Then
 
-- Phase 3: Anki import (.apkg, .colpkg, .csv, .txt, media), preview, duplicates,
-  fresh-start and preserve-progress modes.
 - Phase 4: Deck Library and Kaishi guided install.
 - Phase 5: WaniKani (API v2, token in Android Keystore, sync, dashboard, duplicates).
 - Phase 6: Japanese features (JLPT, kanji, grammar, audio/TTS, cloze, AI examples).

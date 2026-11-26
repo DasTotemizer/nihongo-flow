@@ -21,6 +21,8 @@ import app.nihongoflow.core.study.ProgressRepository
 import app.nihongoflow.core.study.ReviewDirection
 import app.nihongoflow.core.study.SourceKind
 import app.nihongoflow.core.study.StudySettings
+import app.nihongoflow.core.study.ImportBatch
+import app.nihongoflow.core.study.ImportRepository
 import app.nihongoflow.core.workload.DeferralState
 import app.nihongoflow.core.workload.RecoveryPacing
 import app.nihongoflow.core.workload.RecoveryState
@@ -32,7 +34,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /** Room-backed implementation of both repositories. Behaviour matches InMemoryStore. */
-class RoomStore(private val db: NihongoFlowDatabase) : CollectionRepository, ProgressRepository {
+class RoomStore(private val db: NihongoFlowDatabase) : CollectionRepository, ProgressRepository, ImportRepository {
 
     private val c = db.collectionDao()
     private val p = db.progressDao()
@@ -59,6 +61,14 @@ class RoomStore(private val db: NihongoFlowDatabase) : CollectionRepository, Pro
     }
 
     override suspend fun deleteNote(id: String) = db.withTransaction { deleteNoteInternal(id) }
+
+    override suspend fun importBatch(batch: ImportBatch) = db.withTransaction {
+        if (batch.decks.isNotEmpty()) c.upsertDecks(batch.decks.map { it.toEntity() })
+        batch.notes.chunked(CHUNK).forEach { chunk -> c.upsertNotes(chunk.map { it.toEntity() }) }
+        (batch.createdCards + batch.updatedCards).chunked(CHUNK).forEach { chunk -> c.upsertCards(chunk.map { it.toEntity() }) }
+        batch.memory.entries.chunked(CHUNK).forEach { chunk -> p.upsertMemories(chunk.map { (id, m) -> m.toEntity(id) }) }
+        batch.history.chunked(CHUNK).forEach { chunk -> p.insertReviews(chunk.map { it.toEntity() }) }
+    }
 
     private suspend fun deleteNoteInternal(id: String) {
         val ids = c.cardIds(id)

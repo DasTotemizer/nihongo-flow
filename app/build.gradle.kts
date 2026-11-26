@@ -47,6 +47,9 @@ android {
         unitTests.isIncludeAndroidResources = true
     }
 
+    // The Anki import tests use the same packages as core:anki, made by the real Anki.
+    sourceSets["test"].resources.srcDir("../core/anki/src/test/resources")
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -82,6 +85,11 @@ dependencies {
     implementation(project(":core:holiday"))
     implementation(project(":core:workload"))
     implementation(project(":core:study"))
+    implementation(project(":core:anki")) {
+        // The desktop jar is swapped for the Android build of the same library.
+        exclude(group = "com.github.luben", module = "zstd-jni")
+    }
+    implementation("com.github.luben:zstd-jni:${libs.versions.zstd.get()}@aar")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
@@ -104,4 +112,6 @@ dependencies {
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.kotlinx.coroutines.test)
+    // Desktop natives for zstd, so Robolectric tests can read current-format packages.
+    testImplementation(libs.zstd.jni)
 }

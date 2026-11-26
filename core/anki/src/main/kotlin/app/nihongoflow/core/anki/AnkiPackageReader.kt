@@ -78,6 +78,7 @@ class AnkiPackageReader(private val opener: SqlOpener, private val workDir: File
                 val input: InputStream = if (format == AnkiFormat.ANKI21B) ZstdInputStream(raw) else raw
                 input.use { inp -> CollationPatch(dbFile.outputStream().buffered()).use { inp.copyTo(it) } }
             }
+            useRollbackJournal(dbFile)
             val collection = opener.open(dbFile).use { db -> readCollection(db, format, readMedia(zip)) }
             return AnkiPackage(collection, zip, dbFile)
         } catch (e: AnkiImportException) {
@@ -208,6 +209,21 @@ class AnkiPackageReader(private val opener: SqlOpener, private val workDir: File
             json.parseToJsonElement(bytes.toString(Charsets.UTF_8)).jsonObject.mapNotNull { (key, value) ->
                 val name = value.jsonPrimitive.content
                 if (safeName(name)) AnkiMediaEntry(name, key, zstdCompressed = false) else null
+            }
+        }
+    }
+
+    /** A WAL-mode file can't be opened read-only without its side files; switch the header to the classic journal. */
+    private fun useRollbackJournal(file: File) {
+        java.io.RandomAccessFile(file, "rw").use { f ->
+            if (f.length() < 100) return
+            f.seek(18)
+            val write = f.read()
+            val read = f.read()
+            if (write == 2 || read == 2) {
+                f.seek(18)
+                f.write(1)
+                f.write(1)
             }
         }
     }

@@ -23,9 +23,10 @@
 | `core:holiday` | Holiday Mode and pause rules | model |
 | `core:workload` | **Workload manager.** What is presented in a session; missed-day recovery | model, holiday |
 | `core:study` | Decks, notes, cards, cloze, Japanese text, sessions, stats; repository interfaces | all of the above |
+| `core:anki` | Anki package and text import: reading, mapping, history replay | study, kotlinx-serialization, zstd-jni |
 | `app` | Android UI (Compose), Room database, wiring | all core modules |
 
-Modules still to come, matching the spec's list: `core:anki` (package import), `core:wanikani` (API client and sync),
+Modules still to come, matching the spec's list: `core:wanikani` (API client and sync),
 `core:ai` (optional example generation), and backup and restore (Room stays in `app` for now,
 behind the core interfaces). Japanese text handling and cloze parsing live in `core:study` for now.
 

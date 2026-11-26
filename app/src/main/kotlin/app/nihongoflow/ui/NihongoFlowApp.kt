@@ -1,5 +1,6 @@
 package app.nihongoflow.ui
 
+import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
@@ -25,6 +26,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.foundation.layout.padding
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.nihongoflow.core.study.StudyService
+import app.nihongoflow.importer.ImportService
+import app.nihongoflow.ui.importer.ImportScreen
+import app.nihongoflow.ui.importer.ImportViewModel
 import app.nihongoflow.ui.decks.DeckDetailScreen
 import app.nihongoflow.ui.decks.DecksScreen
 import app.nihongoflow.ui.decks.NoteEditorScreen
@@ -49,6 +53,9 @@ sealed interface Overlay {
     data class DeckDetail(val deckId: String) : Overlay
     data class EditNote(val deckId: String, val noteId: String?) : Overlay
     data object Holiday : Overlay
+
+    /** Import of a picked file. [id] makes each pick a fresh import. */
+    data class Import(val uri: String, val id: String = java.util.UUID.randomUUID().toString()) : Overlay
 }
 
 /** Navigation actions available to every screen. */
@@ -59,7 +66,7 @@ class Navigator(
 )
 
 @Composable
-fun NihongoFlowApp(study: StudyService) {
+fun NihongoFlowApp(study: StudyService, imports: ImportService) {
     var current by rememberSaveable { mutableStateOf(Destination.HOME) }
     var stack by remember { mutableStateOf(listOf<Overlay>()) }
     // Bumped whenever data may have changed, so screens reload.
@@ -97,6 +104,10 @@ fun NihongoFlowApp(study: StudyService) {
             is Overlay.DeckDetail -> DeckDetailScreen(study, top.deckId, nav, refresh, modifier)
             is Overlay.EditNote -> NoteEditorScreen(study, top.deckId, top.noteId, nav, modifier)
             Overlay.Holiday -> HolidayScreen(study, nav, modifier)
+            is Overlay.Import -> {
+                val vm: ImportViewModel = viewModel(key = top.id, factory = ImportViewModel.factory(imports, Uri.parse(top.uri)))
+                ImportScreen(vm, nav, modifier)
+            }
             null -> when (current) {
                 Destination.HOME -> HomeScreen(study, review, nav, refresh, modifier)
                 Destination.DECKS -> DecksScreen(study, nav, refresh, modifier)
