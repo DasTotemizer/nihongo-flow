@@ -43,8 +43,10 @@ include(":core:model")
 include(":core:scheduler")
 include(":core:holiday")
 include(":core:workload")
+include(":core:study")
 
 if (hasAndroidSdk) {
+    include(":data")
     include(":app")
 } else {
     logger.lifecycle("Nihongo Flow: no Android SDK found, building the core modules only.")

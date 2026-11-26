@@ -14,6 +14,7 @@ buildscript {
 plugins {
     alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.kotlin.compose) apply false
+    alias(libs.plugins.ksp) apply false
 }
 
 // Shared setup for the pure-Kotlin core modules.

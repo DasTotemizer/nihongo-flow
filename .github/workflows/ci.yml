@@ -25,10 +25,10 @@ jobs:
       # GitHub's Ubuntu runners ship with the Android SDK and set ANDROID_HOME, so the
       # :app module is included here (it is skipped on machines without an SDK).
       - name: Core engine tests
-        run: ./gradlew --no-daemon :core:model:build :core:scheduler:test :core:holiday:test :core:workload:test
+        run: ./gradlew --no-daemon :core:model:build :core:scheduler:test :core:holiday:test :core:workload:test :core:study:test
 
       - name: Android unit tests and debug build
-        run: ./gradlew --no-daemon :app:testDebugUnitTest :app:assembleDebug
+        run: ./gradlew --no-daemon :data:testDebugUnitTest :app:testDebugUnitTest :app:assembleDebug
 
       - name: Upload test reports
         if: always()
@@ -36,6 +36,14 @@ jobs:
         with:
           name: test-reports
           path: "**/build/reports/tests/"
+          if-no-files-found: ignore
+
+      - name: Upload screen walkthrough
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: app/build/screenshots/
           if-no-files-found: ignore
 
       - name: Upload debug APK

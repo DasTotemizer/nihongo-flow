@@ -7,7 +7,9 @@
 - **Gradle multi-module** build with a version catalog (`gradle/libs.versions.toml`).
 - **Core modules are pure Kotlin** (JVM today, no Android imports, `kotlinx-datetime` for
   time) so they can move to Kotlin Multiplatform for an iOS client without rewriting.
-- Planned for the next stages: Room for storage, Hilt for dependency injection, WorkManager
+- Room for storage (`data`), behind the `StudyStore` port so the logic stays plain Kotlin.
+  Dependencies are wired by hand in `NihongoFlowApplication`.
+- Planned for the next stages: WorkManager
   for background sync, DataStore for preferences, Android Keystore (via an encrypted
   store) for the WaniKani token.
 
@@ -19,12 +21,23 @@
 | `core:scheduler` | **Memory scheduler.** FSRS through the official java-fsrs library | model, java-fsrs |
 | `core:holiday` | Holiday Mode and pause rules | model |
 | `core:workload` | **Workload manager.** What is presented in a session; missed-day recovery | model, holiday |
-| `app` | Android UI (Compose), wiring | all core modules |
+| `core:study` | Study logic: decks, cards, today's plan, review sessions, statistics, the `StudyStore` port | all of the above, coroutines |
+| `data` | Room implementation of `StudyStore` (Android library) | core:study, Room |
+| `app` | Android UI (Compose), wiring | core modules, data |
 
 Modules still to come, matching the spec's list: `core:japanese` (normalisation, furigana,
 cloze parsing), `core:anki` (package import), `core:wanikani` (API client and sync),
-`core:ai` (optional example generation), `core:stats`, `data` (Room, repositories,
-backup/restore), and feature UI packages.
+`core:ai` (optional example generation), backup/restore, and feature UI packages.
+
+## Storage
+
+`StudyStore` (in `core:study`) is the only way the logic touches storage. `RoomStudyStore`
+implements it for Android and `InMemoryStudyStore` for tests and previews; both pass the
+same `StudyStoreContract`. Tables: `decks`, `cards`, `memory_states` (written only by a
+real review), `review_log` (append-only, with before and after snapshots), and the
+bookkeeping tables `deferral_states`, `recovery_state` and `holidays`. Times are UTC epoch
+milliseconds, dates ISO strings, enums their names. Every schema version is exported to
+`data/schemas` and must come with a migration; destructive migration is never allowed.
 
 ## The key boundary: scheduler vs workload manager
 

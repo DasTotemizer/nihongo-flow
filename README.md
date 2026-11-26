@@ -11,7 +11,8 @@ WaniKani, Tofugu, Anki or the Kaishi authors.
 
 ## Status
 
-Built in stages. Stage 1 (this one) is the foundation and the no-guilt scheduling engine:
+Built in stages. Stage 1 laid the foundation and the no-guilt scheduling engine; Phase 1
+(core app) makes it a working flashcard app:
 
 | Area | State |
 | --- | --- |
@@ -19,8 +20,13 @@ Built in stages. Stage 1 (this one) is the foundation and the no-guilt schedulin
 | FSRS memory scheduler (java-fsrs, FSRS-6) | Done, verified against reference cases |
 | Workload manager and missed-day recovery | Done, simulated over 1/3/7/14/30-day breaks |
 | Holiday Mode rules (full, casual, indefinite pause) | Done |
-| Android app shell (theme, 5-tab navigation, Home) | Shell only; data screens come next |
-| Database, decks, review screen, card creation | Next stage |
+| Android app shell (theme, 5-tab navigation) | Done |
+| On-device database (Room), decks, cards, review history | Done, tested on real SQLite |
+| Home on real data, session size choice, starter deck | Done |
+| Review screen (reveal, four answers with next-interval preview, swipe, keyboard) | Done |
+| My Decks: create, rename, delete decks; add, edit, pause, delete cards | Done |
+| Progress (basic statistics) and Holiday Mode screens | Done |
+| Study settings, Anki import, Deck Library, WaniKani | Later stages |
 
 See [docs/ROADMAP.md](docs/ROADMAP.md) for every phase and what remains.
 
@@ -29,12 +35,13 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for every phase and what remains.
 Requirements: JDK 17 or newer. The Android app also needs the Android SDK (API 35).
 
 ```
-./gradlew test                 # core engine tests, runs anywhere with a JDK
+./gradlew test                 # core tests anywhere with a JDK; with an SDK also Room and UI tests
 ./gradlew :app:assembleDebug   # Android debug APK, needs ANDROID_HOME or local.properties
 ```
 
 Without an Android SDK the build includes only the pure-Kotlin core modules. CI (GitHub
-Actions) builds both and uploads the debug APK as an artifact.
+Actions) builds everything and uploads the debug APK and a screenshot walkthrough of the
+main screens (rendered by `StudyFlowTest` on a simulated phone) as artifacts.
 
 ## Documentation
 

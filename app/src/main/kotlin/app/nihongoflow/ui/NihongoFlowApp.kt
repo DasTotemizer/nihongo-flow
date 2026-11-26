@@ -1,9 +1,6 @@
 package app.nihongoflow.ui
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.activity.compose.BackHandler
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
@@ -21,10 +18,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.unit.dp
+import app.nihongoflow.core.study.StudyService
+import app.nihongoflow.core.workload.SessionSize
+import app.nihongoflow.ui.decks.DecksTab
 import app.nihongoflow.ui.home.HomeScreen
+import app.nihongoflow.ui.progress.ProgressScreen
+import app.nihongoflow.ui.review.ReviewScreen
+import app.nihongoflow.ui.settings.SettingsScreen
+
+val LocalStudyService = staticCompositionLocalOf<StudyService> { error("No StudyService provided") }
 
 /** The five main navigation areas from the spec. */
 enum class Destination(val label: String, val icon: ImageVector) {
@@ -38,6 +44,8 @@ enum class Destination(val label: String, val icon: ImageVector) {
 @Composable
 fun NihongoFlowApp() {
     var current by rememberSaveable { mutableStateOf(Destination.HOME) }
+    var sessionSize by rememberSaveable { mutableStateOf(SessionSize.SUGGESTED) }
+    BackHandler(enabled = current != Destination.HOME) { current = Destination.HOME }
     Scaffold(
         bottomBar = {
             NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
@@ -52,29 +60,23 @@ fun NihongoFlowApp() {
             }
         },
     ) { padding ->
-        val modifier = Modifier.padding(padding)
+        val inner = Modifier.padding(padding)
         when (current) {
-            Destination.HOME -> HomeScreen(modifier = modifier, onNavigate = { current = it })
-            else -> StageNotice(current, modifier)
+            Destination.HOME -> HomeScreen(
+                modifier = inner,
+                sessionSize = sessionSize,
+                onSessionSizeChange = { sessionSize = it },
+                onNavigate = { current = it },
+            )
+            Destination.DECKS -> DecksTab(modifier = inner)
+            Destination.REVIEW -> ReviewScreen(
+                modifier = inner,
+                sessionSize = sessionSize,
+                onDone = { current = Destination.HOME },
+                onOpenDecks = { current = Destination.DECKS },
+            )
+            Destination.PROGRESS -> ProgressScreen(modifier = inner)
+            Destination.SETTINGS -> SettingsScreen(modifier = inner)
         }
-    }
-}
-
-/**
- * Honest notice for areas that arrive in the next build stage, rather than buttons that
- * pretend to work.
- */
-@Composable
-private fun StageNotice(destination: Destination, modifier: Modifier) {
-    Column(
-        modifier = modifier.fillMaxSize().padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Text(destination.label, style = MaterialTheme.typography.headlineMedium)
-        Text(
-            "This area is built in the next stage, together with the on-device database.",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }
