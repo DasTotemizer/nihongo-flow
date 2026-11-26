@@ -3,7 +3,7 @@
 Phases follow the product spec (section 23). Each stage is a pull request, reviewed before
 the next starts.
 
-## Stage 1: foundation and no-guilt engine (this PR)
+## Stage 1: foundation and no-guilt engine (merged)
 
 - [x] Multi-module Gradle project, version catalog, CI with debug APK artifact
 - [x] FSRS scheduler via java-fsrs, verified against reference cases
@@ -14,15 +14,26 @@ the next starts.
 - [x] Android shell: theme (light and dark), five-tab navigation, Home driven by the engine
 - [x] Guilt-free copy check
 
-## Phase 1: core app (next)
+## Stage 2: Phase 1 core app and Phase 2 screens (this PR)
 
-Room database (schema from spec section 21, with migration tests), repositories, Hilt,
-deck management, card creation, review screen (reveal, four ratings with next-interval
-preview, swipe and keyboard), Home and Holiday screens on real data, basic statistics.
+- [x] `core:study`: decks, notes, card generation, cloze parsing, Japanese text
+      normalisation, duplicate detection, review sessions, statistics
+- [x] Room database (spec section 21 tables), schema exported, no destructive fallback
+- [x] Persistence test: decks, cards, history, settings and holidays survive a restart
+- [x] Deck management: create, rename, delete, search
+- [x] Card creation and editing for vocabulary, kanji, grammar, Q&A, both-ways and cloze
+- [x] Review screen: reveal, four ratings with next-interval preview, swipe, keyboard
+- [x] Home on real data: plan, recovery progress, holiday strip, session size choice
+- [x] Holiday Mode screen: full, casual, pause; plan ahead, change, end, cancel
+- [x] Settings: session length, review cap, new cards, pacing, study days, directions,
+      memory target
+- [x] Progress: milestones, actual results, FSRS estimates, the full picture for today
+- [x] Built-in "First steps" starter deck written for this app
+- [ ] Migration tests (there is only schema version 1 so far)
+- [ ] Hilt: replaced for now by a small manual `AppContainer`; revisit if wiring grows
 
 ## Then
 
-- Phase 2 UI: recovery and holiday screens, session-size control, workload settings.
 - Phase 3: Anki import (.apkg, .colpkg, .csv, .txt, media), preview, duplicates,
   fresh-start and preserve-progress modes.
 - Phase 4: Deck Library and Kaishi guided install.

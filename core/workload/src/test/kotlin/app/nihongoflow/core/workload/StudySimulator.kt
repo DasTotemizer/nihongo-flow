@@ -38,10 +38,10 @@ class StudySimulator(
     val manager = WorkloadManager(settings, scheduler)
     private val random = Random(seed)
 
-    val cards: MutableMap<CardId, MemoryState> = (1L..cardCount).associateWith {
+    val cards: MutableMap<CardId, MemoryState> = (1..cardCount).map { it.toString() }.associateWith {
         MemoryState.new(clock.startOf(startDay))
     }.toMutableMap()
-    private val newOrder = ArrayDeque((1L..cardCount).toList())
+    private val newOrder = ArrayDeque((1..cardCount).map { it.toString() })
 
     val history = mutableListOf<ReviewRecord>()
     val plans = mutableListOf<SessionPlan>()

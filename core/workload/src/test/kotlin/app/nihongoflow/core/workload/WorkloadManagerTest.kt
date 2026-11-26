@@ -35,7 +35,7 @@ class WorkloadManagerTest {
 
     private fun review(id: Long, dueDaysAgo: Int, stability: Double = 10.0, deferral: DeferralState? = null) =
         ReviewCandidate(
-            cardId = id,
+            cardId = id.toString(),
             memory = MemoryState(
                 phase = MemoryPhase.REVIEW,
                 step = null,
@@ -60,7 +60,7 @@ class WorkloadManagerTest {
         now = at,
         clock = clock,
         dueCards = due,
-        newCards = (1000L until 1000L + newCards).map { NewCardCandidate(it) },
+        newCards = (1000L until 1000L + newCards).map { NewCardCandidate(it.toString()) },
         today = today,
         lastStudyDay = lastStudyDay,
         recovery = recovery,
@@ -96,11 +96,11 @@ class WorkloadManagerTest {
     @Test
     fun `learning steps come first`() {
         val learning = ReviewCandidate(
-            99L,
+            "99",
             MemoryState(MemoryPhase.RELEARNING, 0, 2.0, 7.0, now - 5.minutes, now - 15.minutes),
         )
         val plan = manager.plan(request(listOf(learning) + (1L..40L).map { review(it, 2) }))
-        assertEquals(99L, plan.queue.first().cardId)
+        assertEquals("99", plan.queue.first().cardId)
         assertEquals(PlanReason.LEARNING_STEP, plan.queue.first().reason)
     }
 
@@ -112,7 +112,7 @@ class WorkloadManagerTest {
         val small = WorkloadManager(WorkloadSettings(targetSessionMinutes = 1, maxSessionMinutes = 1), estimator)
         // 1 minute = 3 cards; make only one slot available by marking two reviews done today.
         val plan = small.plan(request(listOf(forgotten, strong, fading), today = TodayProgress(reviewsDone = 2)))
-        assertEquals(listOf(1L), plan.queue.filter { it.kind == CardKind.REVIEW }.map { it.cardId })
+        assertEquals(listOf("1"), plan.queue.filter { it.kind == CardKind.REVIEW }.map { it.cardId })
     }
 
     @Test
@@ -121,7 +121,7 @@ class WorkloadManagerTest {
         val others = (1L..6L).map { review(it, 1, 3.0) } + (8L..40L).map { review(it, 1, 3.0) }
         val plan = manager.plan(request(others + waited))
         val first = plan.queue.first { it.kind == CardKind.REVIEW }
-        assertEquals(7L, first.cardId)
+        assertEquals("7", first.cardId)
         assertEquals(PlanReason.WAITED_LONGEST, first.reason)
     }
 

@@ -2,8 +2,8 @@ package app.nihongoflow.core.model
 
 import kotlinx.datetime.Instant
 
-/** Stable identifier of a reviewable card (one card per note template / cloze number). */
-typealias CardId = Long
+/** Stable identifier of a reviewable card (a UUID string, so ids stay unique across devices). */
+typealias CardId = String
 
 /** The four standard review answers. Every answer is processed by FSRS. */
 enum class Rating { AGAIN, HARD, GOOD, EASY }
