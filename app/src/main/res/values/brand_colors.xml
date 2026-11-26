@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Launcher icon (fixed: launchers do not follow the app's night mode). -->
+    <color name="ic_launcher_background">#FAF7F2</color>
+    <color name="ic_launcher_arc">#2F5D4A</color>
+    <color name="ic_launcher_dot">#8DBBA5</color>
+    <!-- In-app logo mark; overridden in values-night. -->
+    <color name="logo_arc">#2F5D4A</color>
+    <color name="logo_dot">#8DBBA5</color>
+</resources>
