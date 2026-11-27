@@ -19,6 +19,7 @@ import app.nihongoflow.core.anki.ProgressMode
 import app.nihongoflow.core.study.NoteKind
 import app.nihongoflow.importer.ImportService
 import app.nihongoflow.importer.OpenedImport
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,7 +29,8 @@ import kotlinx.coroutines.withContext
 
 sealed interface ImportUi {
     data object Opening : ImportUi
-    data class Failed(val message: String) : ImportUi
+    /** [error] is kept so the learner can send the details if the cause isn't obvious. */
+    data class Failed(val message: String, val error: Throwable? = null) : ImportUi
 
     data class AnkiReady(
         val fileName: String,
@@ -68,7 +70,7 @@ class ImportViewModel(private val service: ImportService, uri: Uri) : ViewModel(
             _ui.value = try {
                 when (val o = service.open(uri).also { opened = it }) {
                     is OpenedImport.Anki -> {
-                        val preview = service.anki.preview(o.pkg.collection)
+                        val preview = withContext(Dispatchers.Default) { service.anki.preview(o.pkg.collection) }
                         ImportUi.AnkiReady(
                             fileName = o.fileName,
                             preview = preview,
@@ -88,8 +90,12 @@ class ImportViewModel(private val service: ImportService, uri: Uri) : ViewModel(
                 }
             } catch (e: AnkiImportException) {
                 ImportUi.Failed(e.message ?: "That file couldn't be imported.")
-            } catch (e: Exception) {
-                ImportUi.Failed("That file couldn't be opened.")
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                // Errors too (out of memory, a missing native library): a failed import must
+                // never take the app down with it.
+                ImportUi.Failed("That file couldn't be opened.", e)
             }
         }
     }
@@ -125,7 +131,13 @@ class ImportViewModel(private val service: ImportService, uri: Uri) : ViewModel(
     private fun recheck(state: ImportUi.AnkiReady) {
         val pkg = (opened as? OpenedImport.Anki)?.pkg ?: return
         viewModelScope.launch {
-            val check = withContext(Dispatchers.Default) { service.anki.check(pkg.collection, state.mappings) }
+            val check = try {
+                withContext(Dispatchers.Default) { service.anki.check(pkg.collection, state.mappings) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                return@launch // The summary is optional; the import itself reports any real problem.
+            }
             val now = _ui.value as? ImportUi.AnkiReady ?: return@launch
             if (now.mappings == state.mappings) _ui.value = now.copy(check = check)
         }
@@ -135,7 +147,7 @@ class ImportViewModel(private val service: ImportService, uri: Uri) : ViewModel(
         val s = _ui.value as? ImportUi.AnkiReady ?: return emptyMap()
         val t = s.preview.noteTypes.firstOrNull { it.noteType.id == noteTypeId } ?: return emptyMap()
         val note = t.samples.firstOrNull() ?: return emptyMap()
-        return service.anki.sample(note, s.mappings.getValue(noteTypeId))
+        return runCatching { service.anki.sample(note, s.mappings.getValue(noteTypeId)) }.getOrDefault(emptyMap())
     }
 
     // ---- Text choices ----
@@ -155,7 +167,7 @@ class ImportViewModel(private val service: ImportService, uri: Uri) : ViewModel(
     fun textSample(): Map<String, String> {
         val s = _ui.value as? ImportUi.TextReady ?: return emptyMap()
         val row = s.rows.firstOrNull() ?: return emptyMap()
-        return service.text.sample(row, s.mapping, s.text.html)
+        return runCatching { service.text.sample(row, s.mapping, s.text.html) }.getOrDefault(emptyMap())
     }
 
     // ---- Import ----
@@ -182,8 +194,10 @@ class ImportViewModel(private val service: ImportService, uri: Uri) : ViewModel(
                         else -> ImportUi.Failed("Nothing to import.")
                     }
                 }
-            } catch (e: Exception) {
-                ImportUi.Failed("The import stopped and nothing was saved. (${e.message ?: e.javaClass.simpleName})")
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                ImportUi.Failed("The import stopped and nothing was saved. (${e.message ?: e.javaClass.simpleName})", e)
             }
             close()
         }

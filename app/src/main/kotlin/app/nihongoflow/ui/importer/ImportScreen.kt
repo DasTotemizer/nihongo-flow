@@ -23,6 +23,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,6 +38,7 @@ import app.nihongoflow.core.anki.NoteTypeMapping
 import app.nihongoflow.core.anki.ProgressMode
 import app.nihongoflow.core.anki.TargetFields
 import app.nihongoflow.core.study.MediaRefs
+import app.nihongoflow.CrashLog
 import app.nihongoflow.core.study.NoteKind
 import app.nihongoflow.ui.Destination
 import app.nihongoflow.ui.Navigator
@@ -57,6 +59,12 @@ fun ImportScreen(vm: ImportViewModel, nav: Navigator, modifier: Modifier = Modif
             ImportUi.Importing -> Working("Importing… This can take a minute for a big deck.")
             is ImportUi.Failed -> {
                 Text(s.message)
+                val error = s.error
+                if (error != null) {
+                    val context = LocalContext.current
+                    MutedText("If you send me the details, I can see exactly what went wrong with this file.")
+                    Button(onClick = { CrashLog.share(context, "Import failed: ${s.message}\n\n" + CrashLog.report(context, error)) }) { Text("Send details") }
+                }
                 OutlinedButton(onClick = nav.back) { Text("Back") }
             }
             is ImportUi.AnkiReady -> AnkiPreviewContent(s, vm)

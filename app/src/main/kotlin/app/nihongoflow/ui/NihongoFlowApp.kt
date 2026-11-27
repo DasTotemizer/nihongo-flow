@@ -1,6 +1,10 @@
 package app.nihongoflow.ui
 
 import android.net.Uri
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.platform.LocalContext
+import app.nihongoflow.CrashLog
 import androidx.activity.compose.BackHandler
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
@@ -79,6 +83,20 @@ fun NihongoFlowApp(study: StudyService, imports: ImportService) {
             goTo = { d -> stack = emptyList(); current = d; refresh++ },
             open = { o -> stack = stack + o },
             back = { stack = stack.dropLast(1); refresh++ },
+        )
+    }
+
+    val context = LocalContext.current
+    var lastCrash by remember { mutableStateOf(CrashLog.last(context)) }
+    lastCrash?.let { details ->
+        AlertDialog(
+            onDismissRequest = { CrashLog.clear(context); lastCrash = null },
+            title = { Text("Sorry, the app closed unexpectedly") },
+            text = { Text("Your cards and progress are safe. You can send the technical details so it can be fixed. Nothing is sent unless you choose to.") },
+            confirmButton = {
+                TextButton(onClick = { CrashLog.share(context, details); CrashLog.clear(context); lastCrash = null }) { Text("Send details") }
+            },
+            dismissButton = { TextButton(onClick = { CrashLog.clear(context); lastCrash = null }) { Text("Not now") } },
         )
     }
 

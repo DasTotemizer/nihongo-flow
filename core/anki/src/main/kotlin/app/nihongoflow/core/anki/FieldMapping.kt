@@ -165,7 +165,7 @@ object MappingGuesser {
         return m.filterValues { it in src.indices }
     }
 
-    private val fieldRef = Regex("""\{\{([^{}]+)}}""")
+    private val fieldRef = Regex("""\{\{([^{}]+)\}\}""")
 
     /** Source field names a template shows, from `{{Field}}` and `{{filter:Field}}`. */
     fun referencedFields(template: String): Set<String> =
