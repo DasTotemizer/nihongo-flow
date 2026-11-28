@@ -6,7 +6,7 @@ package app.nihongoflow.core.study
  */
 object Cloze {
 
-    private val pattern = Regex("""\{\{c(\d+)::(.*?)(?:::(.*?))?}}""", RegexOption.DOT_MATCHES_ALL)
+    private val pattern = Regex("""\{\{c(\d+)::(.*?)(?:::(.*?))?\}\}""", RegexOption.DOT_MATCHES_ALL)
 
     data class Deletion(val number: Int, val answer: String, val hint: String?)
 

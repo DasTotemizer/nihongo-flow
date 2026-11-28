@@ -4,6 +4,7 @@ import android.content.Context
 import app.nihongoflow.core.study.StudyService
 import app.nihongoflow.data.NihongoFlowDatabase
 import app.nihongoflow.data.RoomStore
+import app.nihongoflow.importer.ImportService
 
 /**
  * Manual dependency container. One database and one StudyService for the whole app.
@@ -14,4 +15,5 @@ class AppContainer(context: Context) {
     val database: NihongoFlowDatabase = NihongoFlowDatabase.open(context)
     private val store = RoomStore(database)
     val study: StudyService = StudyService(collection = store, progress = store)
+    val imports: ImportService = ImportService(context.applicationContext, store, store, store)
 }

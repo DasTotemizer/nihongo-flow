@@ -98,13 +98,13 @@ object CardRenderer {
     )
 
     private fun line(text: String, role: FaceLine.Role) =
-        text.takeIf { it.isNotBlank() }?.let { FaceLine(it, role, isJapanese(it)) }
+        MediaRefs.withoutRefs(text).takeIf { it.isNotBlank() }?.let { FaceLine(it, role, isJapanese(it)) }
 
     private fun jp(text: String, role: FaceLine.Role) =
-        text.takeIf { it.isNotBlank() }?.let { FaceLine(it, role, japanese = true) }
+        MediaRefs.withoutRefs(text).takeIf { it.isNotBlank() }?.let { FaceLine(it, role, japanese = true) }
 
     private fun en(text: String, role: FaceLine.Role) =
-        text.takeIf { it.isNotBlank() }?.let { FaceLine(it, role, isJapanese(it)) }
+        MediaRefs.withoutRefs(text).takeIf { it.isNotBlank() }?.let { FaceLine(it, role, isJapanese(it)) }
 
     /** True when the text contains kana or kanji. */
     fun isJapanese(text: String): Boolean = text.any { c ->

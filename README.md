@@ -11,7 +11,7 @@ WaniKani, Tofugu, Anki or the Kaishi authors.
 
 ## Status
 
-Built in stages. Stage 1 was the engine; stage 2 (this one) is the usable core app:
+Built in stages. Stage 1 was the engine, stage 2 the core app, stage 3 (this one) Anki import:
 
 | Area | State |
 | --- | --- |
@@ -22,7 +22,7 @@ Built in stages. Stage 1 was the engine; stage 2 (this one) is the usable core a
 | On-device database (Room) | Done, persistence tested |
 | Decks, card creation and editing, cloze | Done |
 | Review screen, Home, Holiday Mode, Settings, Progress | Done |
-| Anki import | Next stage |
+| Anki import (.apkg, .colpkg, .csv, .txt) | Done, tested on real Anki packages |
 
 See [docs/ROADMAP.md](docs/ROADMAP.md) for every phase and what remains.
 
@@ -42,5 +42,6 @@ Actions) builds both and uploads the debug APK as an artifact.
 
 - [Architecture](docs/ARCHITECTURE.md): modules, boundaries, the path to iOS.
 - [Scheduling](docs/SCHEDULING.md): FSRS, the workload manager and missed-day recovery.
+- [Anki import](docs/ANKI_IMPORT.md): formats, mapping, keeping progress.
 - [Kaishi 1.5k](docs/KAISHI.md): licence findings and the install approach.
 - [Roadmap](docs/ROADMAP.md): phases and status.

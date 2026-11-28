@@ -64,6 +64,22 @@ object Fields {
 
     // Any kind
     const val NOTES = "notes"
+
+    /** Media references (`[sound:…]`, `[image:…]`), kept for audio and pictures. Not edited in the card editor. */
+    const val AUDIO = "audio"
+    const val SENTENCE_AUDIO = "sentenceAudio"
+    const val IMAGE = "image"
+
+    // Bookkeeping fields, never shown. Editing a note keeps them.
+
+    /** The Anki note's guid, so importing the same deck again updates instead of duplicating. */
+    const val ANKI_GUID = "_ankiGuid"
+
+    /**
+     * Comma-separated [Card.templateKey]s this note is limited to, for non-cloze notes.
+     * Set by imports so a deck keeps the cards it had in Anki (for example recognition only).
+     */
+    const val ONLY_CARDS = "_onlyCards"
 }
 
 data class Note(

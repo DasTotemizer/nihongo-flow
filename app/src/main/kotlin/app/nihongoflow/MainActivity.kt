@@ -11,10 +11,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val study = (application as NihongoFlowApplication).container.study
+        val container = (application as NihongoFlowApplication).container
         setContent {
             NihongoFlowTheme {
-                NihongoFlowApp(study)
+                NihongoFlowApp(container.study, container.imports)
             }
         }
     }

@@ -12,7 +12,7 @@ import kotlinx.datetime.Instant
  * Reference implementation of both repositories, kept in memory. Used by tests and as the
  * behavioural specification the Room implementation must match.
  */
-class InMemoryStore : CollectionRepository, ProgressRepository {
+class InMemoryStore : CollectionRepository, ProgressRepository, ImportRepository {
     private val decks = linkedMapOf<String, Deck>()
     private val notes = linkedMapOf<String, Note>()
     private val cards = linkedMapOf<CardId, Card>()
@@ -39,6 +39,14 @@ class InMemoryStore : CollectionRepository, ProgressRepository {
     override suspend fun saveNote(note: Note, createdCards: List<Card>, updatedCards: List<Card>) {
         notes[note.id] = note
         (createdCards + updatedCards).forEach { cards[it.id] = it }
+    }
+
+    override suspend fun importBatch(batch: ImportBatch) {
+        batch.decks.forEach { decks[it.id] = it }
+        batch.notes.forEach { notes[it.id] = it }
+        (batch.createdCards + batch.updatedCards).forEach { cards[it.id] = it }
+        memory.putAll(batch.memory)
+        history += batch.history
     }
 
     override suspend fun deleteNote(id: String) {

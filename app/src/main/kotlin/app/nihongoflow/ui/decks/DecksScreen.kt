@@ -2,6 +2,8 @@ package app.nihongoflow.ui.decks
 
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -49,6 +51,9 @@ fun DecksScreen(study: StudyService, nav: Navigator, refresh: Int, modifier: Mod
     var creating by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val pickFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) nav.open(Overlay.Import(uri.toString()))
+    }
 
     Column(
         modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
@@ -62,7 +67,11 @@ fun DecksScreen(study: StudyService, nav: Navigator, refresh: Int, modifier: Mod
                 MutedText("${row.cards} cards · ${row.deck.source.name}")
             }
         }
-        Button(onClick = { creating = true }) { Text("New deck") }
+        RowSpacer {
+            Button(onClick = { creating = true }) { Text("New deck") }
+            OutlinedButton(onClick = { pickFile.launch(arrayOf("*/*")) }) { Text("Import a file") }
+        }
+        MutedText("Import Anki decks (.apkg, .colpkg) or word lists (.csv, .txt).")
 
         Text("Deck Library", style = MaterialTheme.typography.titleLarge)
 
@@ -74,7 +83,7 @@ fun DecksScreen(study: StudyService, nav: Navigator, refresh: Int, modifier: Mod
             OutlinedButton(onClick = {
                 context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(KAISHI_RELEASES)))
             }) { Text("Open the official download page") }
-            MutedText("Importing the downloaded .apkg file comes with Anki import in the next stage.")
+            MutedText("After downloading, tap \"Import a file\" above and pick the .apkg file.")
         }
 
         val starterInstalled = decks.any { it.deck.source == StarterDeck.source }

@@ -17,6 +17,12 @@ interface CollectionDao {
     @Upsert
     suspend fun upsertDeck(deck: DeckEntity)
 
+    @Upsert
+    suspend fun upsertDecks(decks: List<DeckEntity>)
+
+    @Upsert
+    suspend fun upsertNotes(notes: List<NoteEntity>)
+
     @Query("DELETE FROM decks WHERE id = :id")
     suspend fun deleteDeckRow(id: String)
 
@@ -98,6 +104,12 @@ interface ProgressDao {
 
     @Upsert
     suspend fun upsertMemory(state: MemoryStateEntity)
+
+    @Upsert
+    suspend fun upsertMemories(states: List<MemoryStateEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertReviews(reviews: List<ReviewEntity>)
 
     @Query("DELETE FROM fsrs_card_state WHERE cardId IN (:ids)")
     suspend fun deleteMemory(ids: List<String>)

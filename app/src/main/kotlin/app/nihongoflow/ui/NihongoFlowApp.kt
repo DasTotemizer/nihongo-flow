@@ -1,5 +1,10 @@
 package app.nihongoflow.ui
 
+import android.net.Uri
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.platform.LocalContext
+import app.nihongoflow.CrashLog
 import androidx.activity.compose.BackHandler
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
@@ -25,6 +30,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.foundation.layout.padding
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.nihongoflow.core.study.StudyService
+import app.nihongoflow.importer.ImportService
+import app.nihongoflow.ui.importer.ImportScreen
+import app.nihongoflow.ui.importer.ImportViewModel
 import app.nihongoflow.ui.decks.DeckDetailScreen
 import app.nihongoflow.ui.decks.DecksScreen
 import app.nihongoflow.ui.decks.NoteEditorScreen
@@ -49,6 +57,9 @@ sealed interface Overlay {
     data class DeckDetail(val deckId: String) : Overlay
     data class EditNote(val deckId: String, val noteId: String?) : Overlay
     data object Holiday : Overlay
+
+    /** Import of a picked file. [id] makes each pick a fresh import. */
+    data class Import(val uri: String, val id: String = java.util.UUID.randomUUID().toString()) : Overlay
 }
 
 /** Navigation actions available to every screen. */
@@ -59,7 +70,7 @@ class Navigator(
 )
 
 @Composable
-fun NihongoFlowApp(study: StudyService) {
+fun NihongoFlowApp(study: StudyService, imports: ImportService) {
     var current by rememberSaveable { mutableStateOf(Destination.HOME) }
     var stack by remember { mutableStateOf(listOf<Overlay>()) }
     // Bumped whenever data may have changed, so screens reload.
@@ -72,6 +83,20 @@ fun NihongoFlowApp(study: StudyService) {
             goTo = { d -> stack = emptyList(); current = d; refresh++ },
             open = { o -> stack = stack + o },
             back = { stack = stack.dropLast(1); refresh++ },
+        )
+    }
+
+    val context = LocalContext.current
+    var lastCrash by remember { mutableStateOf(CrashLog.last(context)) }
+    lastCrash?.let { details ->
+        AlertDialog(
+            onDismissRequest = { CrashLog.clear(context); lastCrash = null },
+            title = { Text("Sorry, the app closed unexpectedly") },
+            text = { Text("Your cards and progress are safe. You can send the technical details so it can be fixed. Nothing is sent unless you choose to.") },
+            confirmButton = {
+                TextButton(onClick = { CrashLog.share(context, details); CrashLog.clear(context); lastCrash = null }) { Text("Send details") }
+            },
+            dismissButton = { TextButton(onClick = { CrashLog.clear(context); lastCrash = null }) { Text("Not now") } },
         )
     }
 
@@ -97,6 +122,10 @@ fun NihongoFlowApp(study: StudyService) {
             is Overlay.DeckDetail -> DeckDetailScreen(study, top.deckId, nav, refresh, modifier)
             is Overlay.EditNote -> NoteEditorScreen(study, top.deckId, top.noteId, nav, modifier)
             Overlay.Holiday -> HolidayScreen(study, nav, modifier)
+            is Overlay.Import -> {
+                val vm: ImportViewModel = viewModel(key = top.id, factory = ImportViewModel.factory(imports, Uri.parse(top.uri)))
+                ImportScreen(vm, nav, modifier)
+            }
             null -> when (current) {
                 Destination.HOME -> HomeScreen(study, review, nav, refresh, modifier)
                 Destination.DECKS -> DecksScreen(study, nav, refresh, modifier)

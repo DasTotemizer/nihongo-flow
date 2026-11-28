@@ -44,6 +44,7 @@ include(":core:scheduler")
 include(":core:holiday")
 include(":core:workload")
 include(":core:study")
+include(":core:anki")
 
 if (hasAndroidSdk) {
     include(":app")
