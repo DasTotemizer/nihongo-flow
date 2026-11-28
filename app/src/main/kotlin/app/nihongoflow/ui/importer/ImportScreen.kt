@@ -89,7 +89,7 @@ private fun AnkiPreviewContent(s: ImportUi.AnkiReady, vm: ImportViewModel) {
         Text(s.fileName, style = MaterialTheme.typography.titleMedium)
         Text("${p.noteCount} notes, ${p.cardCount} cards" + if (p.deckNames.isNotEmpty()) " in ${p.deckNames.joinToString(", ")}" else "")
         if (p.suspendedCount > 0) MutedText("${p.suspendedCount} cards are suspended in Anki and stay suspended.")
-        if (p.mediaCount > 0) MutedText("${p.mediaCount} audio and picture files. They're saved now; playing them comes in a later update.")
+        if (p.mediaCount > 0) MutedText("${p.mediaCount} audio and picture files. They play and show on your cards.")
     }
 
     if (p.hasProgress) {

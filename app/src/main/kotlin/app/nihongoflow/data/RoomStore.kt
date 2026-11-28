@@ -82,6 +82,7 @@ class RoomStore(private val db: NihongoFlowDatabase) : CollectionRepository, Pro
     }
 
     override suspend fun cards(noteId: String) = c.cards(noteId).map { it.toDomain() }
+    override suspend fun allCards() = c.allCards().map { it.toDomain() }
     override suspend fun card(id: CardId) = c.card(id)?.toDomain()
     override suspend fun cardCount(deckId: String) = c.cardCount(deckId)
     override suspend fun maxNewPosition() = c.maxNewPosition()
@@ -101,7 +102,8 @@ class RoomStore(private val db: NihongoFlowDatabase) : CollectionRepository, Pro
         }
     }
 
-    override suspend fun newCards(limit: Int) = c.newCards(limit).map { it.toDomain() }
+    override suspend fun newCards(limit: Int, deckId: String?) =
+        (if (deckId == null) c.newCards(limit) else c.newCardsInDeck(deckId, limit)).map { it.toDomain() }
 
     override suspend fun countDue(from: Instant, until: Instant) =
         p.countDue(from.toEpochMilliseconds(), until.toEpochMilliseconds())

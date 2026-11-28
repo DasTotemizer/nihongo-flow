@@ -16,6 +16,13 @@ import kotlin.time.Duration.Companion.days
  * are kept in separate fields so the UI never presents one as the other.
  */
 data class ProgressStats(
+    // What's in the collection, studied or not.
+    val notesByKind: Map<NoteKind, Int>,
+    val totalCards: Int,
+    /** Active cards never studied yet. */
+    val cardsNotStarted: Int,
+    val suspendedCards: Int,
+
     // Positive milestones; nothing here ever resets.
     val itemsStarted: Map<NoteKind, Int>,
     /** Notes with at least one card whose memory has lasted 21+ days (FSRS stability). */
@@ -50,9 +57,9 @@ object Statistics {
     suspend fun compute(
         now: Instant,
         notes: List<Note>,
+        cards: List<Card>,
         memory: Map<CardId, MemoryState>,
         reviews: List<ReviewRecord>,
-        cardsByNote: suspend (String) -> List<Card>,
         scheduler: RetrievabilityEstimator,
         dayClock: StudyDayClock,
         today: SessionPlan,
@@ -60,10 +67,11 @@ object Statistics {
         val started = mutableMapOf<NoteKind, Int>()
         val wellKnown = mutableMapOf<NoteKind, Int>()
         val noteOfCard = mutableMapOf<CardId, Note>()
+        val cardsByNote = cards.groupBy { it.noteId }
         for (note in notes) {
-            val cards = cardsByNote(note.id)
-            cards.forEach { noteOfCard[it.id] = note }
-            val states = cards.mapNotNull { memory[it.id] }.filter { !it.isNew }
+            val noteCards = cardsByNote[note.id].orEmpty()
+            noteCards.forEach { noteOfCard[it.id] = note }
+            val states = noteCards.mapNotNull { memory[it.id] }.filter { !it.isNew }
             if (states.isNotEmpty()) started.merge(note.kind, 1, Int::plus)
             if (states.any { it.phase == MemoryPhase.REVIEW && (it.stability ?: 0.0) >= 21.0 }) {
                 wellKnown.merge(note.kind, 1, Int::plus)
@@ -89,6 +97,10 @@ object Statistics {
             .entries.sortedByDescending { it.value }.take(10).map { it.key to it.value }
 
         return ProgressStats(
+            notesByKind = notes.groupingBy { it.kind }.eachCount(),
+            totalCards = cards.size,
+            cardsNotStarted = cards.count { !it.suspended && (memory[it.id]?.isNew ?: true) },
+            suspendedCards = cards.count { it.suspended },
             itemsStarted = started,
             itemsWellKnown = wellKnown,
             totalReviews = reviews.size,

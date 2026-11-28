@@ -247,4 +247,54 @@ class StudyServiceTest {
         assertTrue(store.allNotes().isEmpty())
         assertTrue(store.decks().isEmpty())
     }
+
+    @Test
+    fun `a deck can be studied on its own`() = runTest {
+        val mine = service.createDeck("Mine")
+        val other = service.createDeck("Other")
+        vocab(mine.id, "食べる", "たべる", "to eat")
+        vocab(other.id, "飲む", "のむ", "to drink")
+        val all = service.plan().queue.map { store.card(it.cardId)!!.deckId }.toSet()
+        assertEquals(setOf(mine.id, other.id), all)
+        val only = service.plan(deckId = other.id).queue
+        assertTrue(only.isNotEmpty())
+        assertTrue(only.all { store.card(it.cardId)!!.deckId == other.id })
+    }
+
+    @Test
+    fun `statistics describe the collection before anything is studied`() = runTest {
+        val deck = service.createDeck("Words")
+        vocab(deck.id, "食べる", "たべる", "to eat")
+        vocab(deck.id, "飲む", "のむ", "to drink")
+        val stats = service.stats()
+        assertEquals(2, stats.notesByKind[NoteKind.VOCABULARY])
+        assertEquals(4, stats.totalCards)
+        assertEquals(4, stats.cardsNotStarted)
+        assertEquals(0, stats.totalReviews)
+    }
+
+    @Test
+    fun `sounds and pictures go on the right side of the card`() = runTest {
+        val deck = service.createDeck("Words")
+        val saved = assertIs<SaveNoteResult.Saved>(
+            service.saveNote(
+                deck.id, NoteKind.VOCABULARY,
+                mapOf(
+                    Fields.WORD to "食べる", Fields.READING to "たべる", Fields.MEANING to "to eat",
+                    Fields.AUDIO to "[sound:taberu.mp3]", Fields.SENTENCE_AUDIO to "[sound:taberu-s.mp3]",
+                    Fields.IMAGE to "[image:eat.jpg]",
+                ),
+            ),
+        )
+        val cards = store.cards(saved.note.id).associateBy { it.template }
+        val recognition = service.cardFace(cards.getValue(CardTemplate.RECOGNITION).id)!!
+        assertEquals(emptyList(), recognition.frontSounds)
+        assertEquals(listOf("taberu.mp3", "taberu-s.mp3"), recognition.backSounds)
+        assertEquals(listOf("eat.jpg"), recognition.backImages)
+        // On a meaning-to-word card, the word's audio would give the answer away.
+        val production = service.cardFace(cards.getValue(CardTemplate.PRODUCTION).id)!!
+        assertEquals(emptyList(), production.frontSounds)
+        assertTrue("taberu.mp3" in production.backSounds)
+        assertTrue(production.back.none { "[sound:" in it.text })
+    }
 }

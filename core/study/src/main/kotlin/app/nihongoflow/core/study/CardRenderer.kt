@@ -12,7 +12,19 @@ data class FaceLine(
     enum class Role { PROMPT, ANSWER, READING, DETAIL, LABEL }
 }
 
-data class CardFace(val front: List<FaceLine>, val back: List<FaceLine>)
+/**
+ * The two sides of a card. Media are file names in the app's media folder: [frontSounds]
+ * play when the question shows, [backSounds] when the answer shows, and images are shown
+ * on their side.
+ */
+data class CardFace(
+    val front: List<FaceLine>,
+    val back: List<FaceLine>,
+    val frontSounds: List<String> = emptyList(),
+    val backSounds: List<String> = emptyList(),
+    val frontImages: List<String> = emptyList(),
+    val backImages: List<String> = emptyList(),
+)
 
 /**
  * Builds the question and answer sides of a card from its note. Imported HTML is rendered
@@ -21,7 +33,41 @@ data class CardFace(val front: List<FaceLine>, val back: List<FaceLine>)
  */
 object CardRenderer {
 
-    fun face(note: Note, card: Card): CardFace = when (card.template) {
+    fun face(note: Note, card: Card): CardFace = withMedia(note, card, text(note, card))
+
+    /**
+     * Adds the sounds and pictures. Audio that would give the answer away (the word's own
+     * audio on a meaning-to-word card) only plays once the answer shows.
+     */
+    private fun withMedia(note: Note, card: Card, face: CardFace): CardFace {
+        val (front, back) = mediaFields(note, card)
+        val frontRaw = front.map { note.field(it) }
+        val backRaw = back.map { note.field(it) }
+        val frontSounds = frontRaw.flatMap { MediaRefs.sounds(it) }.distinct()
+        val frontImages = frontRaw.flatMap { MediaRefs.images(it) }.distinct()
+        return face.copy(
+            frontSounds = frontSounds,
+            backSounds = backRaw.flatMap { MediaRefs.sounds(it) }.distinct() - frontSounds.toSet(),
+            frontImages = frontImages,
+            backImages = (frontImages + backRaw.flatMap { MediaRefs.images(it) }).distinct(),
+        )
+    }
+
+    /** Which fields' media belong to the question side and which to the answer side. */
+    private fun mediaFields(note: Note, card: Card): Pair<List<String>, List<String>> {
+        val vocabBack = listOf(Fields.AUDIO, Fields.READING, Fields.MEANING, Fields.SENTENCE, Fields.SENTENCE_AUDIO, Fields.SENTENCE_MEANING, Fields.NOTES, Fields.IMAGE)
+        return when (card.template) {
+            CardTemplate.RECOGNITION -> listOf(Fields.WORD) to vocabBack
+            CardTemplate.PRODUCTION -> listOf(Fields.MEANING) to (listOf(Fields.WORD) + vocabBack)
+            CardTemplate.KANJI_MEANING, CardTemplate.KANJI_READING -> listOf(Fields.KANJI) to listOf(Fields.MEANING, Fields.NOTES, Fields.AUDIO, Fields.IMAGE)
+            CardTemplate.GRAMMAR -> listOf(Fields.PATTERN) to listOf(Fields.MEANING, Fields.EXPLANATION, Fields.EXAMPLE, Fields.EXAMPLE_MEANING, Fields.NOTES, Fields.AUDIO, Fields.IMAGE)
+            CardTemplate.FRONT_TO_BACK -> listOf(Fields.FRONT) to listOf(Fields.BACK, Fields.NOTES, Fields.AUDIO, Fields.IMAGE)
+            CardTemplate.BACK_TO_FRONT -> listOf(Fields.BACK) to listOf(Fields.FRONT, Fields.NOTES, Fields.AUDIO, Fields.IMAGE)
+            CardTemplate.CLOZE -> listOf(Fields.TEXT) to listOf(Fields.EXTRA, Fields.NOTES, Fields.AUDIO, Fields.IMAGE)
+        }
+    }
+
+    private fun text(note: Note, card: Card): CardFace = when (card.template) {
         CardTemplate.RECOGNITION -> CardFace(
             front = listOfNotNull(jp(note.field(Fields.WORD), FaceLine.Role.PROMPT)),
             back = vocabularyBack(note, includeWord = true),

@@ -49,23 +49,35 @@ class ReviewViewModel(private val study: StudyService) : ViewModel() {
 
     private var session: ReviewSession? = null
     private var shownAt: Long = 0L
+    private var starting = false
 
     val inSession: Boolean get() = session != null
 
     /** Reloads the session preview when no session is running. */
     fun refresh() {
-        if (session != null) return
-        viewModelScope.launch { _ui.value = ReviewUi.Ready(study.plan()) }
+        if (session != null || starting) return
+        viewModelScope.launch {
+            val plan = study.plan()
+            // A session may have started meanwhile (for example from a deck page).
+            if (session == null && !starting) _ui.value = ReviewUi.Ready(plan)
+        }
     }
 
-    fun start(size: SessionSize = SessionSize.SUGGESTED) {
+    /** Starts today's session, or with [deckId] a session from that deck only. */
+    fun start(size: SessionSize = SessionSize.SUGGESTED, deckId: String? = null) {
+        _ui.value = ReviewUi.Loading
+        starting = true
         viewModelScope.launch {
-            val plan = study.plan(size)
-            if (plan.queue.isEmpty()) {
-                _ui.value = ReviewUi.Ready(plan)
-                return@launch
+            try {
+                val plan = study.plan(size, deckId)
+                if (plan.queue.isEmpty()) {
+                    _ui.value = ReviewUi.Ready(study.plan())
+                    return@launch
+                }
+                session = study.startSession(plan)
+            } finally {
+                starting = false
             }
-            session = study.startSession(plan)
             showNext()
         }
     }

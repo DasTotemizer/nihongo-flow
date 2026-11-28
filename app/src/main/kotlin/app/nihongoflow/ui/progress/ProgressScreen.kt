@@ -8,7 +8,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.ui.platform.LocalContext
+import app.nihongoflow.CrashLog
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -31,12 +37,29 @@ import app.nihongoflow.ui.format.Formats
 
 @Composable
 fun ProgressScreen(study: StudyService, refresh: Int, modifier: Modifier = Modifier) {
-    val stats by produceState<ProgressStats?>(null, refresh) { value = study.stats() }
+    val result by produceState<Result<ProgressStats>?>(null, refresh) {
+        value = try {
+            Result.success(withContext(Dispatchers.Default) { study.stats() })
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            Result.failure(e)
+        }
+    }
     var showDetail by remember { mutableStateOf(false) }
 
-    val s = stats
-    if (s == null) {
+    val r = result
+    if (r == null) {
         CircularProgressIndicator(modifier.padding(32.dp))
+        return
+    }
+    val s = r.getOrElse { error ->
+        val context = LocalContext.current
+        Column(modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Text("Progress", style = MaterialTheme.typography.headlineMedium)
+            Text("Your progress couldn't be worked out this time. Your cards and history are safe.")
+            Button(onClick = { CrashLog.share(context, "Progress failed\n\n" + CrashLog.report(context, error)) }) { Text("Send details") }
+        }
         return
     }
 
@@ -45,6 +68,20 @@ fun ProgressScreen(study: StudyService, refresh: Int, modifier: Modifier = Modif
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text("Progress", style = MaterialTheme.typography.headlineMedium)
+
+        SectionCard {
+            Text("Your collection", style = MaterialTheme.typography.titleMedium)
+            listOf(
+                NoteKind.VOCABULARY to "Words", NoteKind.KANJI to "Kanji", NoteKind.GRAMMAR to "Grammar points",
+                NoteKind.BASIC to "Question & answer notes", NoteKind.BASIC_AND_REVERSED to "Two-way notes", NoteKind.CLOZE to "Cloze sentences",
+            ).forEach { (kind, label) -> s.notesByKind[kind]?.let { Stat(label, it) } }
+            Stat("Cards", s.totalCards)
+            Stat("Cards not studied yet", s.cardsNotStarted)
+            if (s.suspendedCards > 0) Stat("Suspended cards", s.suspendedCards)
+            if (s.totalReviews == 0 && s.totalCards > 0) {
+                MutedText("Nothing reviewed yet. The figures below fill in as you study.")
+            }
+        }
 
         SectionCard {
             Text("Milestones", style = MaterialTheme.typography.titleMedium)

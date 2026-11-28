@@ -41,7 +41,8 @@ the next starts.
 - [x] Fresh start, or keep progress by replaying the real review log through FSRS
 - [x] Tests on packages made by the real Anki library, on the JVM and through Android SQLite
 - [ ] Opening .apkg files straight from a file manager or browser ("Open with")
-- [ ] Audio and picture playback (files are saved now; Phase 6)
+- [x] Audio and picture playback for imported cards (autoplay plus a replay button)
+- [x] Study a single deck from its page
 
 ## Then
 
