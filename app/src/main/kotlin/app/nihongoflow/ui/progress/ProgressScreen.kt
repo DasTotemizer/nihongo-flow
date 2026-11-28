@@ -57,20 +57,6 @@ fun ProgressScreen(study: StudyService, refresh: Int, modifier: Modifier = Modif
         val context = LocalContext.current
         Column(modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text("Progress", style = MaterialTheme.typography.headlineMedium)
-
-        SectionCard {
-            Text("Your collection", style = MaterialTheme.typography.titleMedium)
-            listOf(
-                NoteKind.VOCABULARY to "Words", NoteKind.KANJI to "Kanji", NoteKind.GRAMMAR to "Grammar points",
-                NoteKind.BASIC to "Question & answer notes", NoteKind.BASIC_AND_REVERSED to "Two-way notes", NoteKind.CLOZE to "Cloze sentences",
-            ).forEach { (kind, label) -> s.notesByKind[kind]?.let { Stat(label, it) } }
-            Stat("Cards", s.totalCards)
-            Stat("Cards not studied yet", s.cardsNotStarted)
-            if (s.suspendedCards > 0) Stat("Suspended cards", s.suspendedCards)
-            if (s.totalReviews == 0 && s.totalCards > 0) {
-                MutedText("Nothing reviewed yet. The figures below fill in as you study.")
-            }
-        }
             Text("Your progress couldn't be worked out this time. Your cards and history are safe.")
             Button(onClick = { CrashLog.share(context, "Progress failed\n\n" + CrashLog.report(context, error)) }) { Text("Send details") }
         }
