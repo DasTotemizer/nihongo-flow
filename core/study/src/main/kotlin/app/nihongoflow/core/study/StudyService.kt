@@ -76,7 +76,11 @@ class StudyService(
         )
     }
 
-    suspend fun plan(size: SessionSize = SessionSize.SUGGESTED): SessionPlan {
+    /**
+     * Today's session. With [deckId], only that deck's cards are planned; the daily new-card
+     * limit still counts new cards from every deck, and the shared recovery state is left as is.
+     */
+    suspend fun plan(size: SessionSize = SessionSize.SUGGESTED, deckId: String? = null): SessionPlan {
         val settings = progress.settings()
         val now = clock.now()
         val day = dayClock(settings)
@@ -85,9 +89,9 @@ class StudyService(
         val templates = ReviewDirection.enabledTemplates(settings.enabledDirections)
 
         val due = progress.dueCards(before = endOfToday)
-            .filter { it.card.template in templates }
+            .filter { it.card.template in templates && (deckId == null || it.card.deckId == deckId) }
             .map { ReviewCandidate(it.card.id, it.memory, it.deferral) }
-        val newCards = progress.newCards(limit = settings.newCardsPerDay * 4 + 20)
+        val newCards = progress.newCards(limit = settings.newCardsPerDay * 4 + 20, deckId = deckId)
             .filter { it.template in templates }
             .map { NewCardCandidate(it.id) }
 
@@ -120,7 +124,7 @@ class StudyService(
                 cameBackFromHoliday = HolidayRules.justEnded(holidays, today, lastStudyDay) != null,
             ),
         )
-        progress.saveRecovery(plan.nextRecoveryState)
+        if (deckId == null) progress.saveRecovery(plan.nextRecoveryState)
         return plan
     }
 
@@ -294,9 +298,9 @@ class StudyService(
         return Statistics.compute(
             now = now,
             notes = collection.allNotes(),
+            cards = collection.allCards(),
             memory = progress.allMemory(),
             reviews = progress.reviewsSince(Instant.DISTANT_PAST),
-            cardsByNote = { collection.cards(it) },
             scheduler = scheduler(settings),
             dayClock = dayClock(settings),
             today = plan(),

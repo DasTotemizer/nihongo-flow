@@ -28,6 +28,7 @@ interface CollectionRepository {
     suspend fun deleteNote(id: String)
 
     suspend fun cards(noteId: String): List<Card>
+    suspend fun allCards(): List<Card>
     suspend fun card(id: CardId): Card?
     suspend fun cardCount(deckId: String): Int
     suspend fun maxNewPosition(): Long
@@ -44,8 +45,8 @@ interface ProgressRepository {
      */
     suspend fun dueCards(before: Instant): List<DueCard>
 
-    /** Active cards never reviewed, in introduction order. */
-    suspend fun newCards(limit: Int): List<Card>
+    /** Active cards never reviewed, in introduction order, from one deck or (null) all of them. */
+    suspend fun newCards(limit: Int, deckId: String? = null): List<Card>
 
     suspend fun countDue(from: Instant, until: Instant): Int
 

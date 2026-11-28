@@ -53,6 +53,9 @@ interface CollectionDao {
     @Query("SELECT * FROM cards WHERE id = :id")
     suspend fun card(id: String): CardEntity?
 
+    @Query("SELECT * FROM cards")
+    suspend fun allCards(): List<CardEntity>
+
     @Query("SELECT * FROM cards WHERE id IN (:ids)")
     suspend fun cardsByIds(ids: List<String>): List<CardEntity>
 
@@ -76,6 +79,15 @@ interface CollectionDao {
         """,
     )
     suspend fun newCards(limit: Int): List<CardEntity>
+
+    @Query(
+        """
+        SELECT c.* FROM cards c LEFT JOIN fsrs_card_state m ON m.cardId = c.id
+        WHERE c.suspended = 0 AND c.deckId = :deckId AND (m.cardId IS NULL OR m.phase = 'NEW')
+        ORDER BY c.newPosition LIMIT :limit
+        """,
+    )
+    suspend fun newCardsInDeck(deckId: String, limit: Int): List<CardEntity>
 }
 
 @Dao

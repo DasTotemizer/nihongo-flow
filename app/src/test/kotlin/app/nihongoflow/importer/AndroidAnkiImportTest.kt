@@ -8,6 +8,8 @@ import app.nihongoflow.core.anki.AnkiPackageReader
 import app.nihongoflow.core.anki.ProgressMode
 import app.nihongoflow.core.model.ReviewSource
 import app.nihongoflow.core.study.Fields
+import app.nihongoflow.core.study.StudyService
+import app.nihongoflow.media.MediaFiles
 import app.nihongoflow.data.NihongoFlowDatabase
 import app.nihongoflow.data.RoomStore
 import kotlinx.coroutines.runBlocking
@@ -67,6 +69,19 @@ class AndroidAnkiImportTest {
             assertEquals(history.last().stateAfter, assertNotNull(store.memory(card.id)))
             assertEquals(setOf("Japanese::Vocab", "Misc"), store.decks().map { it.name }.toSet())
             assertEquals("ID3fake-audio", File(context.filesDir, "media/taberu.mp3").readText())
+
+            // The card plays its audio from the app's media folder.
+            val study = StudyService(store, store)
+            val face = assertNotNull(study.cardFace(card.id))
+            assertEquals(listOf("taberu.mp3"), face.backSounds)
+            assertNotNull(MediaFiles.file(context, "taberu.mp3"))
+
+            // The progress page and a deck-only session work on the imported collection.
+            val stats = study.stats()
+            assertEquals(6, stats.totalReviews)
+            assertEquals(8, stats.totalCards)
+            val deck = store.decks().first { it.name == "Japanese::Vocab" }
+            assertTrue(study.plan(deckId = deck.id).queue.all { store.card(it.cardId)!!.deckId == deck.id })
             db.close()
         }
     }

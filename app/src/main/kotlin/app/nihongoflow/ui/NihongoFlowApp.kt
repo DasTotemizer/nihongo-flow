@@ -67,6 +67,8 @@ class Navigator(
     val goTo: (Destination) -> Unit,
     val open: (Overlay) -> Unit,
     val back: () -> Unit,
+    /** Starts a review session with only this deck's cards. */
+    val studyDeck: (String) -> Unit = {},
 )
 
 @Composable
@@ -83,6 +85,7 @@ fun NihongoFlowApp(study: StudyService, imports: ImportService) {
             goTo = { d -> stack = emptyList(); current = d; refresh++ },
             open = { o -> stack = stack + o },
             back = { stack = stack.dropLast(1); refresh++ },
+            studyDeck = { deckId -> review.start(deckId = deckId); stack = emptyList(); current = Destination.REVIEW },
         )
     }
 

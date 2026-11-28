@@ -61,6 +61,19 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.intl.LocaleList
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.produceState
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import app.nihongoflow.media.MediaFiles
+import app.nihongoflow.media.SoundPlayer
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
 fun ReviewScreen(vm: ReviewViewModel, nav: Navigator, modifier: Modifier = Modifier) {
@@ -120,6 +133,16 @@ private fun ReadyContent(s: ReviewUi.Ready, vm: ReviewViewModel, nav: Navigator)
 private fun CardContent(s: ReviewUi.Showing, vm: ReviewViewModel) {
     val focus = remember { FocusRequester() }
     LaunchedEffect(s.cardId) { runCatching { focus.requestFocus() } }
+    val context = LocalContext.current
+    val sounds = remember { SoundPlayer(context) }
+    DisposableEffect(Unit) { onDispose { sounds.stop() } }
+    // The question's audio plays when the card shows, the answer's when it's revealed.
+    LaunchedEffect(s.cardId, s.revealed) {
+        val toPlay = if (s.revealed) s.face.backSounds else s.face.frontSounds
+        if (toPlay.isNotEmpty() || !s.revealed) sounds.play(toPlay)
+    }
+    val replay = if (s.revealed) s.face.frontSounds + s.face.backSounds else s.face.frontSounds
+    val pictures = if (s.revealed) s.face.backImages else s.face.frontImages
     var drag by remember(s.cardId) { mutableFloatStateOf(0f) }
 
     Column(
@@ -178,6 +201,10 @@ private fun CardContent(s: ReviewUi.Showing, vm: ReviewViewModel) {
             ) {
                 val lines = if (s.revealed) s.face.back else s.face.front
                 lines.forEach { FaceLineView(it) }
+                pictures.forEach { CardPicture(it) }
+                if (replay.isNotEmpty()) {
+                    OutlinedButton(onClick = { sounds.play(replay) }) { Text("▶  Play audio") }
+                }
                 if (!s.revealed) {
                     Spacer(Modifier.height(8.dp))
                     MutedText("Tap to show the answer")
@@ -216,6 +243,17 @@ private fun CardContent(s: ReviewUi.Showing, vm: ReviewViewModel) {
         TextButton(onClick = { vm.finishEarly() }, modifier = Modifier.align(Alignment.CenterHorizontally)) {
             Text("Stop for now")
         }
+    }
+}
+
+@Composable
+private fun CardPicture(name: String) {
+    val context = LocalContext.current
+    val picture by produceState<ImageBitmap?>(null, name) {
+        value = withContext(Dispatchers.IO) { MediaFiles.file(context, name)?.let { MediaFiles.picture(it) }?.asImageBitmap() }
+    }
+    picture?.let {
+        Image(it, contentDescription = null, modifier = Modifier.fillMaxWidth().heightIn(max = 260.dp), contentScale = ContentScale.Fit)
     }
 }
 

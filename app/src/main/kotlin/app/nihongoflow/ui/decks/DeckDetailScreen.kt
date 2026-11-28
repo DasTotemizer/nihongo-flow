@@ -38,13 +38,14 @@ import app.nihongoflow.ui.components.MutedText
 import app.nihongoflow.ui.components.SectionCard
 import kotlinx.coroutines.launch
 
-private data class DeckData(val deck: Deck?, val notes: List<Note>)
+private data class DeckData(val deck: Deck?, val notes: List<Note>, val toStudy: Int? = null)
 
 @Composable
 fun DeckDetailScreen(study: StudyService, deckId: String, nav: Navigator, refresh: Int, modifier: Modifier = Modifier) {
     var reload by remember { mutableIntStateOf(0) }
     val data by produceState(DeckData(null, emptyList()), deckId, refresh, reload) {
         value = DeckData(study.deck(deckId), study.notes(deckId))
+        value = value.copy(toStudy = runCatching { study.plan(deckId = deckId).queue.size }.getOrNull())
     }
     var query by remember { mutableStateOf("") }
     var renaming by remember { mutableStateOf(false) }
@@ -70,8 +71,23 @@ fun DeckDetailScreen(study: StudyService, deckId: String, nav: Navigator, refres
                 deck?.source?.let { src ->
                     MutedText(listOfNotNull(src.name, src.author?.let { "by $it" }, src.licence).joinToString(" · "))
                 }
+                val toStudy = data.toStudy
+                Button(
+                    onClick = { nav.studyDeck(deckId) },
+                    enabled = toStudy != null && toStudy > 0,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        when (toStudy) {
+                            null -> "Study this deck"
+                            0 -> "Nothing to study in this deck right now"
+                            1 -> "Study this deck (1 card today)"
+                            else -> "Study this deck ($toStudy cards today)"
+                        },
+                    )
+                }
                 RowSpacer {
-                    Button(onClick = { nav.open(Overlay.EditNote(deckId, null)) }) { Text("Add a card") }
+                    OutlinedButton(onClick = { nav.open(Overlay.EditNote(deckId, null)) }) { Text("Add a card") }
                     OutlinedButton(onClick = { renaming = true }) { Text("Rename") }
                     OutlinedButton(onClick = { deleting = true }) { Text("Delete") }
                 }

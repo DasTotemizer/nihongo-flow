@@ -2,8 +2,8 @@ package app.nihongoflow.core.study
 
 /**
  * Media references inside note fields, written as `[sound:file.mp3]` (Anki's own syntax)
- * and `[image:file.jpg]`. The files live in the app's media folder. Until audio and image
- * display arrive, faces show the text without the references.
+ * and `[image:file.jpg]`. The files live in the app's media folder. Card faces show the
+ * text without the references and list the sounds and pictures separately.
  */
 object MediaRefs {
     private val ref = Regex("""\[(sound|image):([^\]\r\n]+)]""")

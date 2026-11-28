@@ -58,6 +58,7 @@ class InMemoryStore : CollectionRepository, ProgressRepository, ImportRepository
     }
 
     override suspend fun cards(noteId: String) = cards.values.filter { it.noteId == noteId }
+    override suspend fun allCards() = cards.values.toList()
     override suspend fun card(id: CardId) = cards[id]
     override suspend fun cardCount(deckId: String) = cards.values.count { it.deckId == deckId && !it.suspended }
     override suspend fun maxNewPosition() = cards.values.maxOfOrNull { it.newPosition } ?: 0L
@@ -68,8 +69,8 @@ class InMemoryStore : CollectionRepository, ProgressRepository, ImportRepository
         .filter { !it.suspended }
         .mapNotNull { c -> memory[c.id]?.takeIf { !it.isNew && it.due < before }?.let { DueCard(c, it, deferrals[c.id]) } }
 
-    override suspend fun newCards(limit: Int) = cards.values
-        .filter { !it.suspended && (memory[it.id]?.isNew ?: true) }
+    override suspend fun newCards(limit: Int, deckId: String?) = cards.values
+        .filter { !it.suspended && (deckId == null || it.deckId == deckId) && (memory[it.id]?.isNew ?: true) }
         .sortedBy { it.newPosition }
         .take(limit)
 
